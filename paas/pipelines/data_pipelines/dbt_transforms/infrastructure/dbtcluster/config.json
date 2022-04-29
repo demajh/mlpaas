@@ -1,0 +1,15 @@
+{"service_name": "data-pipeline-dbt-transforms",
+ "task_name": "data-pipeline-dbt-transforms-pipeline",
+ "pipeline_request_type": "run_pipeline",
+ "region": "us-west-1",
+ "image_name": "495303562198.dkr.ecr.us-west-1.amazonaws.com/dbtdocker:latest",
+ "dbt_project_s3_location": "s3://magnify-data-pipeline/pipeline_src/transforms.zip",
+ "config_path": "s3://magnify-data-pipeline/configs/config.json",
+ "role_name": "DevLaunchpadRole",
+ "role_arn": "arn:aws:iam::495303562198:role/DevLaunchpadRole",
+ "vpc_name": "vpc-0f92a3601f639fa95",
+ "instance_type": "t2.2xlarge",
+ "cluster_name": "data-pipeline-dbt-transforms-cluster",
+ "autoscaling_group_name": "data-pipeline-dbt-transforms-autoscaling",
+ "load_balancer_name": "data-pipeline-dbt-transforms-loadbalancer"}
+ 

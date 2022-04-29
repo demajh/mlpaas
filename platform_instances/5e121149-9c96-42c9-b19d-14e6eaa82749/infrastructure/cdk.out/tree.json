@@ -1,0 +1,137 @@
+{
+  "version": "tree-0.1",
+  "tree": {
+    "id": "App",
+    "path": "",
+    "children": {
+      "Tree": {
+        "id": "Tree",
+        "path": "Tree",
+        "constructInfo": {
+          "fqn": "constructs.Construct",
+          "version": "10.0.127"
+        }
+      },
+      "InfrastructureStack": {
+        "id": "InfrastructureStack",
+        "path": "InfrastructureStack",
+        "children": {
+          "model-dev": {
+            "id": "model-dev",
+            "path": "InfrastructureStack/model-dev",
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.Resource",
+              "version": "2.22.0"
+            }
+          },
+          "ImmutableRolemodel-dev": {
+            "id": "ImmutableRolemodel-dev",
+            "path": "InfrastructureStack/ImmutableRolemodel-dev",
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.Resource",
+              "version": "2.22.0"
+            }
+          },
+          "extract_load-cead2776-46db-45c0-a95b-e5c436406163": {
+            "id": "extract_load-cead2776-46db-45c0-a95b-e5c436406163",
+            "path": "InfrastructureStack/extract_load-cead2776-46db-45c0-a95b-e5c436406163",
+            "children": {
+              "AssetImage": {
+                "id": "AssetImage",
+                "path": "InfrastructureStack/extract_load-cead2776-46db-45c0-a95b-e5c436406163/AssetImage",
+                "children": {
+                  "Staging": {
+                    "id": "Staging",
+                    "path": "InfrastructureStack/extract_load-cead2776-46db-45c0-a95b-e5c436406163/AssetImage/Staging",
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.AssetStaging",
+                      "version": "2.22.0"
+                    }
+                  },
+                  "Repository": {
+                    "id": "Repository",
+                    "path": "InfrastructureStack/extract_load-cead2776-46db-45c0-a95b-e5c436406163/AssetImage/Repository",
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_ecr.RepositoryBase",
+                      "version": "2.22.0"
+                    }
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_ecr_assets.DockerImageAsset",
+                  "version": "2.22.0"
+                }
+              },
+              "Resource": {
+                "id": "Resource",
+                "path": "InfrastructureStack/extract_load-cead2776-46db-45c0-a95b-e5c436406163/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::Lambda::Function",
+                  "aws:cdk:cloudformation:props": {
+                    "code": {
+                      "imageUri": {
+                        "Fn::Sub": "${AWS::AccountId}.dkr.ecr.${AWS::Region}.${AWS::URLSuffix}/cdk-hnb659fds-container-assets-${AWS::AccountId}-${AWS::Region}:9dff4b2f0480529770942810ba692850f8504cdc9f6dc5c0fde52b9ae3542fed"
+                      }
+                    },
+                    "role": "arn:aws:iam::545555405821:role/model-dev",
+                    "environment": {
+                      "variables": {
+                        "PYTHONPATH": "/"
+                      }
+                    },
+                    "functionName": "extract_load-cead2776-46db-45c0-a95b-e5c436406163",
+                    "memorySize": 10000,
+                    "packageType": "Image",
+                    "timeout": 900
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_lambda.CfnFunction",
+                  "version": "2.22.0"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_lambda.Function",
+              "version": "2.22.0"
+            }
+          },
+          "CDKMetadata": {
+            "id": "CDKMetadata",
+            "path": "InfrastructureStack/CDKMetadata",
+            "children": {
+              "Default": {
+                "id": "Default",
+                "path": "InfrastructureStack/CDKMetadata/Default",
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.CfnResource",
+                  "version": "2.22.0"
+                }
+              },
+              "Condition": {
+                "id": "Condition",
+                "path": "InfrastructureStack/CDKMetadata/Condition",
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.CfnCondition",
+                  "version": "2.22.0"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "constructs.Construct",
+              "version": "10.0.127"
+            }
+          }
+        },
+        "constructInfo": {
+          "fqn": "aws-cdk-lib.Stack",
+          "version": "2.22.0"
+        }
+      }
+    },
+    "constructInfo": {
+      "fqn": "aws-cdk-lib.App",
+      "version": "2.22.0"
+    }
+  }
+}

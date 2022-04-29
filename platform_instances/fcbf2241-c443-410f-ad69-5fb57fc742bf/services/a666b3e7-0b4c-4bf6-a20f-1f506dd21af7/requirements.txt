@@ -1,0 +1,14 @@
+awslambdaric 
+scipy 
+numpy 
+pandas 
+botocore 
+boto3 
+fsspec 
+s3fs 
+mxnet 
+mxnet_cu101 
+sqlalchemy 
+psycopg2 
+autogluon=='0.4.0' 
+pyarrow=='7.0.0'

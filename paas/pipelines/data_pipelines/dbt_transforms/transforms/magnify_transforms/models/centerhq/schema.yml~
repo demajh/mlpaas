@@ -1,0 +1,30 @@
+
+version: 2
+
+models:
+  - name: sfdc_ufr
+    description: "A model converting all CenterHQ SFDC data to UFR representation"
+    columns:
+      - name: client_id
+        description: "The primary key for this table"
+        tests:
+          - unique
+          - not_null
+	  
+  - name: client_user_telemetry_ufr
+    description: "A model converting all CenterHQ client-user telemetry to UFR representation"
+    columns:
+      - name: client_id
+        description: "The primary key for this table"
+        tests:
+          - unique
+          - not_null
+	  
+  - name: ufr
+    description: "The UFR table for CenterHQ"
+    columns:
+      - name: client_id
+        description: "The primary key for this table"
+        tests:
+          - unique
+          - not_null	  

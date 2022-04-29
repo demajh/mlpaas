@@ -1,0 +1,12 @@
+magnify_transforms:
+  outputs:
+    dev:
+      dbname: centerhq
+      host: magnify-science.cgre9vcx7lph.us-west-1.redshift.amazonaws.com
+      password: Phonebookfencepostsandwich9
+      port: 5439
+      schema: public
+      threads: 2
+      type: redshift
+      user: brianm
+  target: dev

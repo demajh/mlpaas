@@ -1,0 +1,247 @@
+import os
+import sys
+import boto3
+import scipy
+import pickle
+import numpy as np
+import pandas as pd
+import sqlalchemy as sa
+from sqlalchemy.orm import sessionmaker
+
+fname_sfdc = "/home/ubuntu/center_engagement/data/Account Data_sfdc_6FEB22.xlsx"
+outfname_sfdc = "/home/ubuntu/center_engagement/data/center_sfdc.csv"
+fname_spend_tableau = "/home/ubuntu/center_engagement/data/Account_Spend_by_Posted_Date_Tableau_raw.xlsx"
+outfname_spend_tableau = "/home/ubuntu/center_engagement/data/center_spend_tableau.csv"
+fname_card_cases_telemetry = "/home/ubuntu/center_engagement/data/All Card Cases_8.1.21-2.1.22.xls.xlsx"
+outfname_card_cases_telemetry = "/home/ubuntu/center_engagement/data/center_card_cases_telemetry.csv"
+out_s3_dir = "s3://static-prediction-service/data/customer=centerhq/problem_type=transform_input/"
+out_s3_bucket = "static-prediction-service"
+out_s3_prefix_sfdc = "data/customer=centerhq/problem_type=transform_input/sfdc.csv"
+out_s3_prefix_spend_tableau = "data/customer=centerhq/problem_type=transform_input/spend_tableau.csv"
+out_s3_prefix_card_cases_telemetry = "data/customer=centerhq/problem_type=transform_input/card_cases_telemetry.csv"
+
+s3_client = boto3.client('s3')
+df_sfdc = pd.read_excel(fname_sfdc)
+print(sorted(list(df_sfdc.columns)))
+df_sfdc.to_csv(outfname_sfdc, sep="|", index=False)
+
+try:
+    response = s3_client.upload_file(outfname_sfdc, out_s3_bucket, out_s3_prefix_sfdc)
+except ClientError as e:
+    print(e)
+    sys.exit()
+
+df_spend_tableau = pd.read_excel(fname_spend_tableau)
+print(sorted(list(df_spend_tableau.columns)))
+df_spend_tableau.to_csv(outfname_spend_tableau, sep="|", index=False)
+
+try:
+    response = s3_client.upload_file(outfname_spend_tableau, out_s3_bucket, out_s3_prefix_spend_tableau)
+except ClientError as e:
+    print(e)
+    sys.exit()
+
+df_card_cases_telemetry = pd.read_excel(fname_card_cases_telemetry)
+print(sorted(list(df_card_cases_telemetry.columns)))
+df_card_cases_telemetry.to_csv(outfname_card_cases_telemetry, sep="|", index=False)
+
+try:
+    response = s3_client.upload_file(outfname_card_cases_telemetry, out_s3_bucket, out_s3_prefix_card_cases_telemetry)
+except ClientError as e:
+    print(e)
+    sys.exit()
+
+#>>>>>>>> MAKE CHANGES HERE >>>>>>>>
+DATABASE = "centerhq"
+USER = "brianm"
+PASSWORD = sys.argv[1]  #see answer by David Bern https://stackoverflow.com/questions/43136925/create-a-config-file-to-hold-values-like-username-password-url-in-python-behave/43137301
+HOST = "magnify-science.cgre9vcx7lph.us-west-1.redshift.amazonaws.com"
+PORT = "5439"
+SCHEMA = "public"
+
+########## connection and session creation ##########
+connection_string = "redshift+psycopg2://%s:%s@%s:%s/%s" % (USER,PASSWORD,HOST,str(PORT),DATABASE)
+#connection_string = "redshift+psycopg2://%s:%s@%s:%s/%s" % (USER,PASSWORD,HOST,str(PORT))
+print(connection_string)
+engine = sa.create_engine(connection_string)
+print("Conencted!")
+session = sessionmaker()
+session.configure(bind=engine)
+s = session()
+
+#--select example
+create_sfdc_table = '''CREATE TABLE centerhq.public."sfdc-data-max"
+(
+  "Comdata Account Code"	                    nvarchar(max)   default  '',
+  "Account Name"                                nvarchar(max)   default  '',
+  "Type"		                                nvarchar(max)   default  '',
+  "Opportunity Name"	                        nvarchar(max)   default  '',
+  "Opportunity Record Type"	                    nvarchar(max)   default  '',
+  "Sum of Closed Won Annual Spend"	            nvarchar(max)   default  '',
+  "Booked Monthly Spend Currency"	            nvarchar(max)   default  '',
+  "Booked Monthly Spend"	                    nvarchar(max)   default  '',
+  "Annual Contract Value Currency"	            nvarchar(max)   default  '',
+  "Annual Contract Value"	                    nvarchar(max)   default  '',
+  "Employee Segment"	                        nvarchar(max)   default  '',
+  "Industry"	                                nvarchar(max)   default  '',
+  "Oppty Division"	                            nvarchar(max)   default  '',
+  "Oppty Team"	                                nvarchar(max)   default  '',
+  "Account Owner: Full Name"	                nvarchar(max)   default  '',
+  "Deployment Manager: Full Name"  	            nvarchar(max)   default  '',
+  "Deployment Stage"	                        nvarchar(max)   default  '',
+  "Account Manager: Full Name"	                nvarchar(max)   default  '',
+  "Employees"	                                nvarchar(max)   default  '',
+  "AE Projected Number of Cards"	            nvarchar(max)   default  '',
+  "Projected Number of Cards for Deployment"	nvarchar(max)   default  '',
+  "Actual Cards Issued at Handoff"	            nvarchar(max)   default  '',
+  "Days In Deployment"	                        nvarchar(max)   default  '',
+  "Application Signed"	                        nvarchar(max)   default  '',
+  "Account Code Received from Comdata"	        nvarchar(max)   default  '',
+  "Kickoff Call"	                            nvarchar(max)   default  '',
+  "First Transaction Posted (Rollup)"	        nvarchar(max)   default  '',
+  "Admin Call"	                                nvarchar(max)   default  '',
+  "Configuration Call"	                        nvarchar(max)   default  '',
+  "Month End Close"	                            nvarchar(max)   default  '',
+  "Initial Estimated Handoff Full Rollout"	    nvarchar(max)   default  '',
+  "Actual Estimated Handoff To Full Rollout"	nvarchar(max)   default  '',
+  "Handoff to Full Rollout Date"	            nvarchar(max)   default  '',
+  "Days to Activate"	                        nvarchar(max)   default  '',
+  "Days to Fully Rollout"	                    nvarchar(max)   default  '',
+  "Credit Line Received Currency"	            nvarchar(max)   default  '',
+  "Credit Line Received"	                    nvarchar(max)   default  '',
+  "Credit Billing Cycle Received"	            nvarchar(max)   default  '',
+  "Credit Type Received"	                    nvarchar(max)   default  '',
+  "Payment Term"	                            nvarchar(max)   default  '',
+  "Last QBR"	                                nvarchar(max)   default  '',
+  "Next Planned QBR"	                        nvarchar(max)   default  '',
+  "QBR Client Goal"	                            nvarchar(max)   default  '',
+  "Client Requested QBR Frequency"	            nvarchar(max)   default  '',
+  "White Space"	                                nvarchar(max)   default  '',
+  "Whitespace Comments"	                        nvarchar(max)   default  '',
+  "Whitespace Comments Update Date"             nvarchar(max)   default  ''
+)
+'''
+print("Executing table creation...")
+create_table_out = s.execute(create_sfdc_table)
+s.commit()
+
+#--select example
+sfdc_data_insert = '''COPY centerhq.public."sfdc-data-max" FROM 's3://static-prediction-service/data/customer=centerhq/problem_type=transform_input/sfdc.csv' IAM_ROLE 'arn:aws:iam::495303562198:role/redshift-elt-incoming' FORMAT AS CSV DELIMITER '|' QUOTE '"' REGION AS 'us-west-1'
+'''
+print("Executing table insertion...")
+sfdc_data_out = s.execute(sfdc_data_insert)
+s.commit()
+
+#--select example
+sfdc_data_extract = '''SELECT * from centerhq.public."sfdc-data-max"'''
+print("Executing table extraction...")
+sfdc_data_out = s.execute(sfdc_data_extract)
+rows = s.commit()
+print(sfdc_data_out)
+print(rows)
+for row in sfdc_data_out:
+    print(row)
+
+
+#--select example
+create_spend_tableau_table = '''CREATE TABLE centerhq.public."spend-tableau-data-max"
+(
+  "Account Name-1"                       nvarchar(max)   default  '',
+  "Account Code"                         nvarchar(max)   default  '',
+  "Deployment Stage"                     nvarchar(max)   default  '',
+  "Year of Posted Year Month (Fiscal)"   nvarchar(max)   default  '',
+  "Month of Posted Year Month (Fiscal)"  nvarchar(max)   default  '',
+  "MoM Spend Change"                     nvarchar(max)   default  '',
+  "Spend Attainment"	                 nvarchar(max)   default  '',
+  "Ramp Month ( First Txn)"              nvarchar(max)   default  '',
+  "Min. Ramp Month"                      nvarchar(max)   default  '',
+  "Adjusted Spend Monthly Target"        nvarchar(max)   default  '',
+  "Annual Spend (updated)"               nvarchar(max)   default  '',
+  "Monthly Spend"                        nvarchar(max)   default  '',
+  "Spend w RR"                           nvarchar(max)   default  '',
+  "Total Due Amount Fixed"               nvarchar(max)   default  ''
+)
+'''
+print("Executing table creation...")
+create_table_out = s.execute(create_spend_tableau_table)
+s.commit()
+
+#--select example
+spend_tableau_data_insert = '''COPY centerhq.public."spend-tableau-data-max" FROM 's3://static-prediction-service/data/customer=centerhq/problem_type=transform_input/spend_tableau.csv' IAM_ROLE 'arn:aws:iam::495303562198:role/redshift-elt-incoming' FORMAT AS CSV DELIMITER '|' QUOTE '"' REGION AS 'us-west-1'
+'''
+print("Executing table insertion...")
+spend_tableau_data_out = s.execute(spend_tableau_data_insert)
+s.commit()
+
+#--select example
+spend_tableau_data_extract = '''SELECT * from centerhq.public."spend-tableau-data-max"'''
+print("Executing table extraction...")
+spend_tableau_data_out = s.execute(spend_tableau_data_extract)
+rows = s.commit()
+print(spend_tableau_data_out)
+print(rows)
+for row in spend_tableau_data_out:
+    print(row)
+
+
+#--select example
+create_cct_table = '''CREATE TABLE centerhq.public."card-case-telemetry-data-max"
+(
+  "Actionable Case"        nvarchar(max)   default  '',
+  "Case Number"            nvarchar(max)   default  '',
+  "Case ID"	         nvarchar(max)   default  '',
+  "Date/Time Opened"       nvarchar(max)   default  '',
+  "Date/Time Closed"	 nvarchar(max)   default  '',
+  "Case Owner"             nvarchar(max)   default  '',
+  "Comdata Account Code"   nvarchar(max)   default  '',
+  "Comdata Customer ID"	 nvarchar(max)   default  '',
+  "Account Name"           nvarchar(max)   default  '',
+  "Contact Name"	         nvarchar(max)   default  '',
+  "Contact: Email"         nvarchar(max)   default  '',
+  "Center User"            nvarchar(max)   default  '',
+  "Center UserID"	         nvarchar(max)   default  '',
+  "Center User Role"	 nvarchar(max)   default  '',
+  "Cards"                  nvarchar(max)   default  '',
+  "Case Type"              nvarchar(max)   default  '',
+  "Case Subtype"           nvarchar(max)   default  ''
+)
+'''
+print("Executing table creation...")
+create_table_out = s.execute(create_cct_table)
+s.commit()
+
+#--select example
+cct_data_insert = '''COPY centerhq.public."card-case-telemetry-data-max" FROM 's3://static-prediction-service/data/customer=centerhq/problem_type=transform_input/card_cases_telemetry.csv' IAM_ROLE 'arn:aws:iam::495303562198:role/redshift-elt-incoming' FORMAT AS CSV DELIMITER '|' QUOTE '"' REGION AS 'us-west-1'
+'''
+print("Executing table insertion...")
+cct_data_out = s.execute(cct_data_insert)
+s.commit()
+
+
+#--select example
+cct_data_extract = '''SELECT * from centerhq.public."card-case-telemetry-data-max"'''
+print("Executing table extraction...")
+cct_data_out = s.execute(cct_data_extract)
+rows = s.commit()
+print(cct_data_out)
+print(rows)
+for row in cct_data_out:
+    print(row)
+
+
+"""
+#--select example
+drop_sfdc_table = '''DROP TABLE centerhq.public."sfdc-data-max"'''
+print("Executing table extraction...")
+drop_sfdc_table_out = s.execute(drop_sfdc_table)
+s.commit()
+#--select example
+drop_spend_tableau_table = '''DROP TABLE centerhq.public."spend-tableau-data-max"'''
+print("Executing table extraction...")
+drop_spend_tableau_table_out = s.execute(drop_spend_tableau_table)
+s.commit()
+drop_card_case_telemetry_table = '''DROP TABLE centerhq.public."card-case-telemetry-data-max"'''
+print("Executing table extraction...")
+drop_card_case_telemetry_table_out = s.execute(drop_card_case_telemetry_table)
+s.commit()
+"""
